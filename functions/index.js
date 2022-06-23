@@ -11,7 +11,7 @@ let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'giangphamgia03@gmail.com',
-        pass: '##########'
+        pass: 'bbenbcmoofhyrfiu'
     }
     
 });
@@ -19,8 +19,11 @@ let transporter = nodemailer.createTransport({
 
 function emailIsValid(destEmail) {
     const checkMe = destEmail.substring(0,destEmail.length-1);
-    const mailformat = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
-    return mailformat.test(checkMe);
+    const oneAt = /^[^@]+@[^@]+$/;
+    const correctDots = /^(?!\.)(?!.*\.\.)/
+    const noSpaces = /^\S*$/;
+    const mailFormat = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+    return noSpaces.test(checkMe) && mailFormat.test(checkMe) && correctDots.test(checkMe) && oneAt.test(checkMe);
 };
 
 
@@ -35,7 +38,8 @@ function getDeliveryDate(shipping = 7) {
 /* Generates Email */
 function constructEmail(destEmail, defaultItems, dateObject) {
     const textPrompt = `Hi ${destEmail}! The following items will be sent to you: `;
-    const textItems = defaultItems.join(', ');
+    //const textItems = defaultItems === null ? 'No items ordered' : defaultItems.join(', ');
+    textItems = "Testing Testing";
     const textArrival = `Your order will arrive on ${dateObject.toLocaleDateString()}`;
     let options = {
         from: 'Giang Pham <giangphamgia03@gmail.com>',
@@ -73,9 +77,12 @@ async function notify(request, response) {
     catch (error) {
         response.send(error.toString());
     }
-    
 }
 
 
 exports.notify = functions.https.onRequest(notify);
+module.exports = {emailIsValid, constructEmail, getDeliveryDate};
+
+
+
 
