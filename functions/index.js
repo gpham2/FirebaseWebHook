@@ -11,25 +11,21 @@ let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'giangphamgia03@gmail.com',
-        pass: 'bbenbcmoofhyrfiu'
+        pass: '##########'
     }
     
 });
 
-/* Shipping Days */
-const shippingDays = 7;
 
-
-/* Email Validation */ 
-function emailIsValid(destEmail, response) {
-    let index = -1;
-    index = members.findIndex(items => items.email === destEmail.substring(0,destEmail.length-1));
-    if (index === -1) response.send('Invalid member!');
-    return index;
+function emailIsValid(destEmail) {
+    const checkMe = destEmail.substring(0,destEmail.length-1);
+    const mailformat = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+    return mailformat.test(checkMe);
 };
 
+
 /* Calculates Delivery Date */
-function getDeliveryDate(shipping) {
+function getDeliveryDate(shipping = 7) {
     var deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + shipping);
     return deliveryDate;
@@ -37,41 +33,47 @@ function getDeliveryDate(shipping) {
 
 
 /* Generates Email */
-function constructEmail(special, destEmail, defaultItems, dateObject, index) {
-    const textPrompt = 'Hi ' + destEmail + '! The following items will be sent to you: ';
-    const textItems = special === "true" ? members[index].items.join(', ') : defaultItems.join(', ');
-    const textArrival = 'Your order will arrive on ' + dateObject.toLocaleDateString();
+function constructEmail(destEmail, defaultItems, dateObject) {
+    const textPrompt = `Hi ${destEmail}! The following items will be sent to you: `;
+    const textItems = defaultItems.join(', ');
+    const textArrival = `Your order will arrive on ${dateObject.toLocaleDateString()}`;
     let options = {
         from: 'Giang Pham <giangphamgia03@gmail.com>',
         to: destEmail,
         subject: 'Testing',
         text: textItems,
-        html: '<div>' + textPrompt + '</div><b>' + textItems + '</b>' + '<div>' + textArrival + '</div>',
+        html: `<div> ${textPrompt} </div><b> ${textItems} </b><div> ${textArrival} </div>`,
     };
     return options;
 }
 
 
 /* Sends Email */
-async function sendEmail(options, response) {
-    return await transporter.sendMail(options, (error, info) => {
-        if(error){
-            return response.send(error.toString());
-        }
-        return response.send('Email Succesfully Sent');
+function sendEmail(options) {
+    return new Promise((resolve, reject) => {
+        transporter.sendMail(options, (error, info) => {
+        if (error) return reject();
+        return resolve();
+        });
     });
 }
 
 
 /* Webhook function */
-
 async function notify(request, response) {
 
     const dest = request.query.dest
-    let index = emailIsValid(dest, response);
-    if (index === -1) return;
-    let options = constructEmail(request.query.individualized, dest, request.body.items, getDeliveryDate(shippingDays), index);
-    return await sendEmail(options, response);
+    const isValid = emailIsValid(dest);
+    if (isValid === false) return response.send('Invalid Email');
+    const options = constructEmail(dest, request.body.items, getDeliveryDate());
+    try {
+        const emailResult = await sendEmail(options, response);
+        return response.send("Email is successfully sent");
+    }
+    catch (error) {
+        response.send(error.toString());
+    }
+    
 }
 
 
