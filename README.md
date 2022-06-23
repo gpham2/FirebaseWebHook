@@ -1,3 +1,3 @@
 # FirebaseWebHook
 
-Small project for me to learn about working with webhooks and firebase
+Small assignment for me to learn about working with webhooks and firebase
